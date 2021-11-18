@@ -25,60 +25,66 @@
 #'
 #' @export
 
-OK  <- function(coords, gauge, cross.val=FALSE){
+OK  <- function(sat, gauge, cross.val=FALSE){
 
-Zg 	<- gauge[[1]]
-Gdata 	<- gauge[[2]]
-
-Zg         <- data.frame(t(Zg))
-gaugename  <- names(Zg)
-
-## log transform rain gauge data (comment out if not needed)
-#Zg <- log(Zg +0.01)
-
-## merge maps
-data <- cbind(data.frame(Gdata), Zg)
-coordinates(data) <- ~coords.x1+coords.x2 
-proj4string(data) <- proj4string(Gdata)
-
-vm.fit    <- list()
-
-Zs        <- matrix(ncol=nrow(coords),nrow=length(gaugename))
-crossval  <- matrix(ncol=nrow(Gdata), nrow=length(gaugename))
-
-
-for (i in 1:length(gaugename)){
-
-# Get data for time step and exclude gauges with missing data
+    coords <- sat[[2]]
+    
+    Zg 	<- gauge[[1]]
+    Gdata 	<- gauge[[2]]
+    
+    Zg         <- data.frame(t(Zg))
+    gaugename  <- names(Zg)
+    
+    ## log transform rain gauge data (comment out if not needed)
+                                        #Zg <- log(Zg +0.01)
+    browser()
+    ## merge maps
+    data <- cbind(data.frame(Gdata), Zg)
+    coordinates(data) <- ~x+y 
+    ## pJS not included in input! proj4string(data) <- proj4string(Gdata)
+    ## think this is caught in automap variagram fitting
+    
+    vm.fit    <- list()
+    
+    Zs        <- matrix(ncol=nrow(coords),nrow=length(gaugename))
+    crossval  <- matrix(ncol=nrow(Gdata), nrow=length(gaugename))
+    
+    
+    for (i in 1:length(gaugename)){
+        
+        ## Get data for time step and exclude gauges with missing data
 	data_sub    <- data[is.finite(unlist(as.data.frame(data)[gaugename[i]])),]
-
-# Model semivariogram
-      formula     <- as.formula(paste(as.character(gaugename[i])," ~ ", 1 ,
-                                      sep=""))
-      vm.fit[[i]] <- autofitVariogram(formula, data_sub, 
-                                      model = c("Sph", "Exp", "Gau"))
-
-# Perform Kriging 
-      Zs[i,] <- krige(formula, locations=data_sub, newdata=coords, 
-                      model = vm.fit[[i]]$var_model)$var1.pred 
+        
+                                        # Model semivariogram
+        formula     <- as.formula(paste(as.character(gaugename[i])," ~ ", 1 ,
+                                        sep=""))
+        browser()
+        ## blow up - try specifying the crs - see gstat bug reports
+        
+        vm.fit[[i]] <- autofitVariogram(formula, data_sub, 
+                                        model = c("Sph", "Exp", "Gau"))
+        
+                                        # Perform Kriging 
+        Zs[i,] <- krige(formula, locations=data_sub, newdata=coords, 
+                        model = vm.fit[[i]]$var_model)$var1.pred 
 	
-# Perform cross-validation 	
-      if(cross.val==TRUE) {
-      cv <- krige.cv(formula, locations=data_sub, model = vm.fit[[i]]$var_model)
-      crossval[i,as.numeric(row.names(cv))] <- cv$var1.pred
-      }
-
-}
-
-# back-log transform output
-# 	Zs    <- exp(Zs) - 0.01
-
-# tag dates 
-       Zs  <- as.zoo(Zs); time(Zs) <- time(gauge[[1]])
-       crossval  <- as.zoo(crossval); time(crossval) <- time(gauge[[1]])
-
-
-# return results	   
-if(cross.val==TRUE) return(crossval) else return(Zs) 
-
+                                        # Perform cross-validation 	
+        if(cross.val==TRUE) {
+            cv <- krige.cv(formula, locations=data_sub, model = vm.fit[[i]]$var_model)
+            crossval[i,as.numeric(row.names(cv))] <- cv$var1.pred
+        }
+        
+    }
+    
+                                        # back-log transform output
+                                        # 	Zs    <- exp(Zs) - 0.01
+    
+                                        # tag dates 
+    Zs  <- as.zoo(Zs); time(Zs) <- time(gauge[[1]])
+    crossval  <- as.zoo(crossval); time(crossval) <- time(gauge[[1]])
+    
+    
+                                        # return results	   
+    if(cross.val==TRUE) return(crossval) else return(Zs) 
+    
 }

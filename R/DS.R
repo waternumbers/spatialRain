@@ -50,10 +50,12 @@ index(Zg) <- as.Date(index(Zg))
 
 if(!cross.val) {
 
-# get location of Zg in Zs
-loc <- numeric()
-for (i in 1:length(Gdata)) loc[i] <- which.min(spDists(Tdata,Gdata[i,] 
-                                                       ,longlat))
+                                        ## get location of Zg in Zs
+    loc <- numeric()
+    for (i in 1:nrow(Gdata)) {
+        print(i)
+        loc[i] <- which.min(spDists(Tdata,Gdata[i,,drop=FALSE] ,longlat))
+    }
 
 # subset Zs 
 Zs_sub <- Zs[,loc]

@@ -13,6 +13,12 @@ pixels, containing columns x=x-coordinates, y=y-coordinates
 sat  [\link{1}] is a zoo object with dimensions ncol=no of satellite
 pixels, nrow=no of timestep}
 
+\item{gauge}{is a list:
+gauge[\link{2}] is a data.frame with dimensions nrow=no of stations,
+containing columns x=x-coordinates, y=y-coordinates
+gauge[\link{1}] is a zoo object with dimensions ncol=no of stations,
+nrow=no of timestep}
+
 \item{longlat}{is a flag to describe the coordinate grids of spatial data.
 Defaults to TRUE i.e. on long-lat notation}
 
@@ -32,12 +38,6 @@ References: Todini, E. (2001). A Bayesian technique for
 conditioning radar precipitation estimates to rain-gauge measurements.
 Hydrology and Earth System Sciences, 5(2):187-199.
 PROGEA Srl (2009). RAINMUSIC, User manual & references. PROGEA Srl, Bologna.
-
-#' @param gauge is a list:
-gauge[\link{2}] is a data.frame with dimensions nrow=no of stations,
-containing columns x=x-coordinates, y=y-coordinates
-gauge[\link{1}] is a zoo object with dimensions ncol=no of stations,
-nrow=no of timestep
 }
 \examples{
 # BC_out <- BC(sat, gauge)
