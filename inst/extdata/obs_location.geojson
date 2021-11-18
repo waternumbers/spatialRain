@@ -1,0 +1,13 @@
+{
+"type": "FeatureCollection",
+"name": "obs_location",
+"features": [
+{ "type": "Feature", "properties": { "x": 81.28, "y": 28.65, "name": "Chisapani" }, "geometry": { "type": "Point", "coordinates": [ 81.28, 28.65 ] } },
+{ "type": "Feature", "properties": { "x": 81.44, "y": 28.95, "name": "Asaraghat" }, "geometry": { "type": "Point", "coordinates": [ 81.44, 28.95 ] } },
+{ "type": "Feature", "properties": { "x": 81.67, "y": 28.1, "name": "Nepalgunj" }, "geometry": { "type": "Point", "coordinates": [ 81.67, 28.1 ] } },
+{ "type": "Feature", "properties": { "x": 80.95, "y": 29.25, "name": "Dipayal" }, "geometry": { "type": "Point", "coordinates": [ 80.95, 29.25 ] } },
+{ "type": "Feature", "properties": { "x": 81.21, "y": 29.15, "name": "Chitreghat" }, "geometry": { "type": "Point", "coordinates": [ 81.21, 29.15 ] } },
+{ "type": "Feature", "properties": { "x": 82.2, "y": 28.7, "name": "Jajarkot" }, "geometry": { "type": "Point", "coordinates": [ 82.2, 28.7 ] } },
+{ "type": "Feature", "properties": { "x": 81.71, "y": 28.84, "name": "Dailekh" }, "geometry": { "type": "Point", "coordinates": [ 81.71, 28.84 ] } }
+]
+}
