@@ -39,143 +39,150 @@
 
 DS <- function(sat,gauge,longlat=TRUE, cross.val=FALSE){
 
-Zs	<- sat[[1]]
-Zg	<- gauge[[1]]
-Tdata 	<- sat[[2]]
-Gdata 	<- gauge[[2]]
-
-# standardise index classes
-index(Zs) <- as.Date(index(Zs))
-index(Zg) <- as.Date(index(Zg))
-
-if(!cross.val) {
-
-                                        ## get location of Zg in Zs
-    loc <- numeric()
-    for (i in 1:nrow(Gdata)) {
-        print(i)
-        loc[i] <- which.min(spDists(Tdata,Gdata[i,,drop=FALSE] ,longlat))
-    }
-
-# subset Zs 
-Zs_sub <- Zs[,loc]
-
-# get point residuals
-res <- Zs_sub - Zg
-
-# calculate kernel weights
-
-# first level -  get distances between interpolation grids and point residuals
-distres <- spDists(Gdata, Tdata ,longlat)
-
-# second level - get distances between interpolation grids and pseudo-residuals
-distpseud <- spDists(Tdata, Tdata ,longlat)
-
-# Define Gaussian kernel function
-kerf <- function(x,b){ return(1/sqrt(2*pi)*exp(- x^2 /(2*b^2))) } 
-
-# Parameterise b using Silverman's rule of thumb
-
-b1 <- 1.06*sd(distres  )*length(distres  )^(-1/5)
-b2 <- 1.06*sd(distpseud)*length(distpseud)^(-1/5);
-
-# compute Kernel weights 
-K1 <- kerf((distres)  ,b1);
-K2 <- kerf((distpseud),b2);
-
-K1 <- t(K1)
-K1 <- rep(K1,nrow(res)); dim(K1) <- c(dim(t(distres)),nrow(res))
-
-# interpolate residuals
-eDS <- eSS <- matrix(ncol=nrow(Tdata), nrow=nrow(res))
-
-for (t in 1:nrow(res)){
-
-eSS[t,] <- (K1[,,t] %*% t(res[t,])) /apply(K1[,,t],1,sum)
-eDS[t,] <- (K1[,,t] %*% t(res[t,]) + K2 %*% eSS[t,] )/ (apply(K1[,,t],1,sum)
-                                                        + apply(K2,1,sum))
-}
-
-# add residual back to background
-Zs <- Zs - eDS
-
-Zs[which(Zs<0)] <- 0 
-
-return(Zs)
-} else {
-
-################################################################################
-
-# DS  - cross validation
-
-################################################################################
-
-crossval <- matrix(ncol=nrow(Gdata),nrow=nrow(Zg))
-
-# initiate progress bar
-pb <- txtProgressBar()
-print("Double kernel smoothing - cross validation")
-
-for (q in 1:nrow(Gdata)){
-setTxtProgressBar(pb, q/nrow(Gdata))
-
-# get location of Zg in Zs
-loc <- numeric()
-for (i in 1:length(Gdata[-q,])) loc[i] <- which.min(spDists(Tdata,Gdata[-q,][i,] 
-                                                            ,longlat))
-
-# subset Zs 
-Zs_sub <- Zs[,loc]
-
-# get point residuals
-res <- Zs_sub - Zg[,-q]
-
-# calculate kernel weights
-
-# first level -  get distances between interpolation grids and point residuals
-distres   <- spDists(Gdata[-q,], Tdata ,longlat)
-
-# second level - get distances between interpolation grids and pseudo-residuals
-distpseud <- spDists(Tdata, Tdata ,longlat)
-
-# Define Gaussian kernel function
-kerf <- function(x,b){ return(1/sqrt(2*pi)*exp(- x^2 /(2*b^2))) } 
-
-# Parameterise b using Silverman's rule of thumb
-b1 <- 1.06*sd(distres  )*length(distres  )^(-1/5)
-b2 <- 1.06*sd(distpseud)*length(distpseud)^(-1/5);
+    Zs	<- sat[[1]]
+    Zg	<- gauge[[1]]
+    ## added to get common times....PJS
+    idx <- index(Zg)[index(Zg) %in% index(Zs)]
     
-# compute Kernel weights 
-K1 <- kerf((distres)  ,b1);
-K2 <- kerf((distpseud),b2);
-
-K1 <- t(K1)
-K1 <- rep(K1,nrow(res)); dim(K1) <- c(dim(t(distres)),nrow(res))
-
-# Interpolate residuals
-eSS <- matrix(ncol=nrow(Tdata), nrow=nrow(res))
-eDS <- numeric()
-
-loc_q          <- which.min(spDists(Tdata,Gdata[q,] ,longlat))
-
-for (t in 1:nrow(res)){
-
-eSS[t,] <- (K1[,,t] %*% t(res[t,])) /apply(K1[,,t],1,sum)
-eDS[t]  <- (t(matrix(K1[loc_q,,t])) %*% t(res[t,]) + K2[,loc_q] %*% eSS[t,] )/ 
-             (sum(K1[loc_q,,t]) + sum(K2[,loc_q]))
-
-}
-
-DS 		 <- Zs[,loc_q] - eDS
-DS[which(DS<0)] <- 0 
-
-crossval[,q]    <- DS
-
-}
-
-close(pb)
-crossval  <- as.zoo(crossval); time(crossval) <- time(gauge[[1]])
-
-return(crossval)
-}
+    Zs <- Zs[idx,]
+    Zg <- Zg[idx,]
+    
+    Tdata 	<- sat[[2]]
+    Gdata 	<- gauge[[2]]
+    
+                                        # standardise index classes
+                                        #index(Zs) <- as.Date(index(Zs))
+                                        #index(Zg) <- as.Date(index(Zg))
+    
+    if(!cross.val) {
+        
+        ## get location of Zg in Zs
+        loc <- numeric()
+        for (i in 1:nrow(Gdata)) {
+            print(i)
+            loc[i] <- which.min(spDists(Tdata,Gdata[i,,drop=FALSE] ,longlat))
+        }
+        
+                                        # subset Zs 
+        Zs_sub <- Zs[,loc]
+        
+                                        # get point residuals
+        res <- Zs_sub - Zg
+        
+                                        # calculate kernel weights
+        
+                                        # first level -  get distances between interpolation grids and point residuals
+        distres <- spDists(Gdata, Tdata ,longlat)
+        
+                                        # second level - get distances between interpolation grids and pseudo-residuals
+        distpseud <- spDists(Tdata, Tdata ,longlat)
+        
+                                        # Define Gaussian kernel function
+        kerf <- function(x,b){ return(1/sqrt(2*pi)*exp(- x^2 /(2*b^2))) } 
+        
+                                        # Parameterise b using Silverman's rule of thumb
+        
+        b1 <- 1.06*sd(distres  )*length(distres  )^(-1/5)
+        b2 <- 1.06*sd(distpseud)*length(distpseud)^(-1/5);
+        
+                                        # compute Kernel weights 
+        K1 <- kerf((distres)  ,b1);
+        K2 <- kerf((distpseud),b2);
+        
+        K1 <- t(K1)
+        K1 <- rep(K1,nrow(res)); dim(K1) <- c(dim(t(distres)),nrow(res))
+        
+                                        # interpolate residuals
+        eDS <- eSS <- matrix(ncol=nrow(Tdata), nrow=nrow(res))
+        
+        for (t in 1:nrow(res)){
+            
+            eSS[t,] <- (K1[,,t] %*% t(res[t,])) /apply(K1[,,t],1,sum)
+            eDS[t,] <- (K1[,,t] %*% t(res[t,]) + K2 %*% eSS[t,] )/ (apply(K1[,,t],1,sum)
+                + apply(K2,1,sum))
+        }
+        
+                                        # add residual back to background
+        
+        Zs <- Zs - eDS
+        
+        Zs[which(Zs<0)] <- 0 
+        
+        return(Zs)
+    } else {
+        
+################################################################################
+        
+                                        # DS  - cross validation
+        
+################################################################################
+        
+        crossval <- matrix(ncol=nrow(Gdata),nrow=nrow(Zg))
+        
+                                        # initiate progress bar
+        pb <- txtProgressBar()
+        print("Double kernel smoothing - cross validation")
+        
+        for (q in 1:nrow(Gdata)){
+            setTxtProgressBar(pb, q/nrow(Gdata))
+            
+                                        # get location of Zg in Zs
+            loc <- numeric()
+            for (i in 1:length(Gdata[-q,])) loc[i] <- which.min(spDists(Tdata,Gdata[-q,][i,] 
+                                                                       ,longlat))
+            
+                                        # subset Zs 
+            Zs_sub <- Zs[,loc]
+            
+                                        # get point residuals
+            res <- Zs_sub - Zg[,-q]
+            
+                                        # calculate kernel weights
+            
+                                        # first level -  get distances between interpolation grids and point residuals
+            distres   <- spDists(Gdata[-q,], Tdata ,longlat)
+            
+                                        # second level - get distances between interpolation grids and pseudo-residuals
+            distpseud <- spDists(Tdata, Tdata ,longlat)
+            
+                                        # Define Gaussian kernel function
+            kerf <- function(x,b){ return(1/sqrt(2*pi)*exp(- x^2 /(2*b^2))) } 
+            
+                                        # Parameterise b using Silverman's rule of thumb
+            b1 <- 1.06*sd(distres  )*length(distres  )^(-1/5)
+            b2 <- 1.06*sd(distpseud)*length(distpseud)^(-1/5);
+            
+                                        # compute Kernel weights 
+            K1 <- kerf((distres)  ,b1);
+            K2 <- kerf((distpseud),b2);
+            
+            K1 <- t(K1)
+            K1 <- rep(K1,nrow(res)); dim(K1) <- c(dim(t(distres)),nrow(res))
+            
+                                        # Interpolate residuals
+            eSS <- matrix(ncol=nrow(Tdata), nrow=nrow(res))
+            eDS <- numeric()
+            
+            loc_q          <- which.min(spDists(Tdata,Gdata[q,] ,longlat))
+            
+            for (t in 1:nrow(res)){
+                
+                eSS[t,] <- (K1[,,t] %*% t(res[t,])) /apply(K1[,,t],1,sum)
+                eDS[t]  <- (t(matrix(K1[loc_q,,t])) %*% t(res[t,]) + K2[,loc_q] %*% eSS[t,] )/ 
+                    (sum(K1[loc_q,,t]) + sum(K2[,loc_q]))
+                
+            }
+            
+            DS 		 <- Zs[,loc_q] - eDS
+            DS[which(DS<0)] <- 0 
+            
+            crossval[,q]    <- DS
+            
+        }
+        
+        close(pb)
+        crossval  <- as.zoo(crossval); time(crossval) <- time(gauge[[1]])
+        
+        return(crossval)
+    }
 }

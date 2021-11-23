@@ -6,32 +6,46 @@
 #' pixel-point pair and interpolates them to the satellite field using inverse-
 #' distance weighting (IDW) at every time step 
 #'
-#' @param gauge is a list: 
-#' gauge[[2]] is a data.frame with dimensions nrow=no of stations, 
-#' containing columns x=x-coordinates, y=y-coordinates 
-#' gauge[[1]] is a zoo object with dimensions ncol=no of stations, 
-#' nrow=no of timestep
-#' @param sat is a list
-#' sat[[2]] is a data.frame with dimensions nrow=no of satellite
-#' pixels, containing columns x=x-coordinates, y=y-coordinates
-#' sat  [[1]] is a zoo object with dimensions ncol=no of satellite 
-#' pixels, nrow=no of timestep
-#' @param cross.val option TRUE=in cross validation mode; default FALSE 
-#' @param longlat is a flag to describe the coordinate grids of spatial data. 
-#' Defaults to TRUE i.e. on long-lat notation
-#' 
-#' @return Zs merging output - zoo object with dimensions == dimensions sat
-#' [["ts""]
-#' @return crossval cross validation- zoo object with dimensions == dimensions 
-#' gauge[["ts""]
+#' @param grd is a SpatialPointsDataFrame of gridded rainfall data.
+#' @param obs is a SpatialPointsDataFrame of observed rainfall data
+#' @param only_obs return only columns for which there are observations
 #'
+#' @return A SpatialPointsDataFrame of merged fields of the same dimension as grd, unless \code{only_obs == TRUE} in which case the columns are determined by the intersection of the names of grd and obs.
 #' @examples
 #' # RIDW_out <- RIDW(sat, gauge)
 #' # RIDW_cv  <- RIDW(sat, gauge, cross.val=TRUE)
 #'
 #' @export
+ridw <- function(grd,obs,only_obs=FALSE){
 
-RIDW <- function(sat, gauge, longlat=TRUE, cross.val=FALSE){
+        ## check grd
+    if(!("SpatPointsDataFrame" %in% class(grd))){ stop("grd should be a SpatialPointsDataFrame object") }
+    
+    ## check obs
+    if(!("SpatPointsDataFrame" %in% class(obs))){ stop("obs should be a SpatialPointsDataFrame") }
+    
+    ## check there are some common names
+    nm <- intersect(names(grd),names(obs))
+    if(length(nm)==0){
+        if(only_obs){
+            stop("No common series")
+        }else{
+            warning("No common series")
+            return(grd)
+        }
+    }
+
+       ## ensure the project information matches
+    if( crs(obs) != crs(grd) ){
+        warning("Reprojecting observation locations")
+        obs <- project(obs,crs(grd))
+    }
+
+    ## initialise the output - we will rewrite grd
+    if(only_obs){
+        grd <- grd[,nm]
+    }
+    
 
 Zs 	<- sat[[1]]
 Zg 	<- gauge[[1]]

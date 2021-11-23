@@ -4,19 +4,17 @@
 \alias{dk}
 \title{Double Kernel Residual Smoothing}
 \usage{
-dk(rst, obs_location, obs, name_attr = "name")
+dk(grd, obs, nm)
 }
 \arguments{
-\item{rst}{is a SpatRaster of gridded rainfall data.}
+\item{grd}{is a sf of gridded rainfall data.}
 
-\item{obs_location}{is a SpatVector of observation locations.}
+\item{obs}{is a sf of observed rainfall data}
 
-\item{obs}{is a zoo object of observations}
-
-\item{name_attr}{the column of attributes in obs_location used to name the columns in obs}
+\item{nm}{names of series to utilise}
 }
 \value{
-A SpatRaster of merged fields of the same dimension as rst
+A sf of merged fields of the same dimension as grd, unless \code{only_obs == TRUE} in which case the columns are determined by the intersection of the names of grd and obs.
 }
 \description{
 This function merges gridded and rain gauge fields using
@@ -29,6 +27,6 @@ Chapman and Hall/CRC Monographs on Statistics and Applied Probability Series.
 Chapman and Hall/CRC.
 }
 \examples{
-# out <- dk(sat, gauge_loc, gauge)
+# out <- dk(sat, obs)
 
 }

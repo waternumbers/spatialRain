@@ -1,5 +1,5 @@
 Package: spatialRain
-Title: Various Method For Post-Processing and Creating Spatial Rainfall Fields
+Title: Various Method for Post-Processing and Creating Spatial Rainfall Fields
 Version: 0.0.0.9000
 Authors@R: c(
 	   person(given = "Zed", family="Zulkafli", role= "aut"),
@@ -10,17 +10,17 @@ Authors@R: c(
            	role = c("aut","cre"),
            	email = "paul@waternumbers.co.uk",
            	comment = c(ORCID = "0000-0002-0034-3412")))
-Description: Various non-parametric and geostatistical methods for combining 
+Description: Various non-parametric and geo-statistical methods for combining 
     pixel (satellite, radar, etc) and point (rain gauge) precipitation.
 License: GPL (>= 3)
 Encoding: UTF-8
 Imports:
-   sp,
+   sf,
    gstat,
-   rgdal,
    automap,
-   zoo,
    hydroGOF
+Suggests:
+   stars
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
